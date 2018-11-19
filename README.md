@@ -1,0 +1,1 @@
+This is the sample api for cryptocurrency intrgrstion for the existing application
