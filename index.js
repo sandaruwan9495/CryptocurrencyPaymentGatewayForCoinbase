@@ -1,2 +1,2 @@
 let app = require('./web/index');
-app.runServer();
+app.runServer(process.argv);

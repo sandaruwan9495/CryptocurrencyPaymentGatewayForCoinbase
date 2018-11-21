@@ -4,7 +4,7 @@
   "description": "This is an API for handling the cryptocurrency transaction in the existing projects.Coinbase is the wallet and in here we use their API for do the stuff.",
   "main": "index.js",
   "scripts": {
-    "start":"node index.js",
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "set NODE_ENV=development&&set NODE_PORT=3000&&nodemon start",
     "prod": ""
@@ -12,6 +12,9 @@
   "author": "G.D.S.Wijerathne",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.18.0",
+    "body-parser": "^1.18.3",
+    "coinbase": "^2.0.8",
     "dotenv": "^6.1.0",
     "express": "^4.16.4"
   }
