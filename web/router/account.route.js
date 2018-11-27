@@ -1,7 +1,7 @@
-const express = require('express');
-const router = express.Router();
-const accountController = require('../../controllers/account/account.controller');
-router.get('/', accountController.index);
-router.get('/transaction-status', accountController.callback1);
-router.get('/transaction-status2', accountController.callback2);
-module.exports = router;
+const route = require('./common.route');
+
+const controllers = require('../../controllers/index.controller');
+route.get('/', controllers.authController.index);
+route.get('/client-auth-status', controllers.authController.getAccountInfo);
+route.get('/account-Info', controllers.accountController.index);
+module.exports = route;
