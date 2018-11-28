@@ -33,6 +33,7 @@ const app = module.exports = {};
 app.runServer = function (args) {
     // routes
     server.use('/', routes.accountRoutes);
+    server.use('/auth', routes.authRoutes);
     //Connect to the database
     db.conn.connect()
         .then(
