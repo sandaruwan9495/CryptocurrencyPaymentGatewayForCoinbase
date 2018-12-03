@@ -8,7 +8,9 @@ const https = require('https');
 const dotenv = require('dotenv');
 dotenv.config();
 // db
-
+let coinbase = require('coinbase-commerce-node');
+var Client = coinbase.Client;  
+Client.init('e83edb62-57f1-4ba0-8726-a989df548b5f'); 
 const db = require('../controllers/dbconection.controller');
 
 // routers
@@ -34,6 +36,7 @@ app.runServer = function (args) {
     // routes
     server.use('/', routes.accountRoutes);
     server.use('/auth', routes.authRoutes);
+    server.use('/checkout', routes.coinbaseCommerceRoutes);
     //Connect to the database
     db.conn.connect()
         .then(
