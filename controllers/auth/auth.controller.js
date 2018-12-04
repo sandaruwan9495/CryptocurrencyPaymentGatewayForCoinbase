@@ -116,6 +116,49 @@ exports.userLogin = function (req, res) {
     }
   })
 }
+exports.adminLogin = function (req, res) {
+  const username = req.body.username;
+  const password = req.body.password;
+  query = "SELECT * FROM admins WHERE username=\'" + username + "\' AND password=\'" + password + "\'";
+  db.query(query, function (err, data) {
+    if (!err) {
+      if (data.rowsAffected > 0) {
+        res.send({
+          status: true,
+          error: false,
+          error_message: "",
+          message: "login success",
+          data: {
+            is_match: true,
+            user: data.recordset[0]
+          }
+        })
+      } else {
+        res.send({
+          status: false,
+          error: false,
+          error_message: "",
+          message: "username or password incorrect",
+          data: {
+            is_match: false,
+            user: {}
+          }
+        })
+      }
+    } else {
+      res.send({
+        status: false,
+        error: true,
+        error_message: err,
+        message: "",
+        data: {
+          is_match: false,
+          user: {}
+        }
+      })
+    }
+  })
+}
 exports.bitcoinPayment = function (req, res) {
   let userId = req.query.id;
   let auth_code = req.query.auth_code;
