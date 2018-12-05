@@ -1,135 +1,160 @@
-const db = require('../dbconection.controller').req;
+'use_strict'
 let coinbase = require('coinbase-commerce-node');
+let Charge = coinbase.resources.Charge;
 const common_helper = require('../common_helper.controller');
-let query = "";
+const ChargeM = require('../../models/charge.model');
+const Product = require('../../models/product.model');
+const CreatedCharge = require('../../models/charge_created.model');
+const PendingCharge = require('../../models/charge_pending.model');
+const DelayedCharge = require('../../models/charge_delayed.model');
+const FailedCharge = require('../../models/charge_failed.model');
+const ConfiremedCharge = require('../../models/charge_confiremed.model');
 exports.index = function (req, res) {
-    query = "SELECT * FROM cources WHERE cource_id=" + req.query.id
-    db.query(query, function (err, data) {
-        if (!err) {
-            var Charge = coinbase.resources.Charge;
-            var chargeData = {
-                'name': data.recordset[0].cource_name,
-                'description': 'Sample Cource',
-                'local_price': {
-                    'amount': data.recordset[0].price,
-                    'currency': 'LKR'
-                },
-                'pricing_type': 'fixed_price'
-
-            }
-            Charge.create(chargeData, function (error, response) {
-                if (!error) {
-                    query = "INSERT INTO charges (price,price_type,code,item_name,host_url) VALUES(" +
-                        response.pricing.local.amount +","+
-                        "\'" +response.pricing.local.currency+ "\'," +
-                        "\'" + response.code + "\'," +
-                        "\'" + response.name + "\'," +
-                        "\'" + response.hosted_url + "\')";
-                    db.query(query).then(
-                        (data1) => {
-                            if (data1.rowsAffected > 0) {
-                                query = "SELECT id FROM charges WHERE code=\'" + response.code + "\'"
-                                db.query(query).then(
-                                    (data2) => {
-                                        if (data2.rowsAffected > 0) {
-                                            query = "INSERT INTO user_make_charges (user_id, charge_id) VALUES(" +
-                                                req.query.user_id +","+
-                                                data2.recordset[0].id+")";
-                                                db.query(query).then(
-                                                (data3) => {
-                                                    if (data3.rowsAffected > 0) {
-                                                        common_helper.send_success(res, "Charge created successfully", response);
-                                                    } else {
-                                                        common_helper.send_error(res, null, "Something went wrong when inserting user_make_charges")
-                                                    }
-                                                }
-                                            ).catch(
-                                                (err) => {
-                                                    common_helper.send_error(res, err, "Something went wrong")
-                                                }
-                                            )
-
-                                        } else {
-                                            common_helper.send_error(res, null, "Something went wrong when accessing the charge")
-                                        }
-                                    }
-                                ).catch(
-                                    (err) => {
-                                        common_helper.send_error(res, err, "Something went wrong")
-                                    }
-                                )
-                            } else {
-                                common_helper.send_error(res, null, "Something went wrong in inserting charges")
-                            }
-                        }
-                    ).catch(
-                        (err) => {
-                            common_helper.send_error(res, err, "Something went wrong")
-                        }
-                    )
-                } else {
-                    common_helper.send_error(res, error, "Cant create the cryptocurrency checkout")
-                }
-            });
-        } else {
-            common_helper.send_error(res, err, "Database Error")
-        }
+    ChargeM.all()
+    .then((charges)=>{
+        common_helper.send_success(res, "all charges", charges)
+    })
+    .catch((err)=>{
+        common_helper.send_error(res, err, "database Error")
     })
 }
-exports.webhoockResponse = function (req, res) {
-    query = "INSERT INTO charge_status (event_id, type, created_at, charge_code) VALUES(" +
-        "\'"+req.body.event.id +"\',"+
-        "\'"+req.body.event.type +"\',"+
-        "\'"+req.body.event.created_at +"\',"+
-        "\'"+req.body.event.data.code+"\')";        
-    db.query(query).then(
-        (data3) => {
-            res.writeHead(200);
-            res.end();
+exports.create = (req, res) => {
+    Product.findById(req.query.id)
+    .then((product)=>{
+        var chargeData = {
+            'name': product.name,
+            'description': 'Sample Cource',
+            'local_price': {
+                'amount': product.price,
+                'currency': 'LKR'
+            },
+            'pricing_type': 'fixed_price'
         }
-    ).catch(
-        (err) => {
-            res.writeHead(200);
-            res.end();
-        }
-    )    
+        Charge.create(chargeData, (err, createdCharge)=>{
+            if (!err) {
+                ChargeM.create({
+                    code:createdCharge.code,
+                    productName:createdCharge.name,
+                    hostedUrl:createdCharge.hosted_url,
+                    description:createdCharge.description,
+                    ChargeCreateAt:createdCharge.created_at,
+                    ChargeExpiredAt:createdCharge.expires_at,
+                    price:createdCharge.pricing.local.amount,
+                    priceUnit:createdCharge.pricing.local.currency,
+                    pricingType:createdCharge.codpricing_typee,
+                })
+                .then((charge)=>{
+                    if(charge != null){
+                        common_helper.send_success(res, "charge create successfull",charge)
+                    }else{
+                        common_helper.send_status_false(res, "charge create successfull but not inserted to the database")
+                    }
+                })
+                .catch((err)=>{
+                    common_helper.send_error(res, err, "database Error")
+                })
+            } else {
+                common_helper.send_error(res, err, "unable to create charge")
+            }
+        });
+    })
+    .catch((err)=>{
+        common_helper.send_error(res, err, "database Error")
+    })
 }
-exports.charges = function (req, res) {
-    var Charge = coinbase.resources.Charge;
-    Charge.all({}, function (err, list) {
-        if (!err) {
-            res.send(list)
-        } else {
-            res.send(err)
-        }
-    });
+exports.chargeCreatedWebhook = (req, res) => {
+    const createdCharge =  {
+        code:req.body.event.data.code,
+        ChargeCreatedAt:req.body.event.data.timeline.time
+    }
+    CreatedCharge.create(createdCharge)
+    .then(()=>{
+        res.writeHead(200);
+        res.end();
+    })
+    .catch((err)=>{
+        res.writeHead(500);
+        res.end();
+    })
 }
-exports.lists = function (req, res) {
-    var Charge = coinbase.resources.Charge;
-    var Checkout = coinbase.resources.Checkout;
-    var params = {
-        'order': 'desc'
-    };
-
-    Checkout.all(params, function (err, list) {
-        if (!err) {
-            res.send(list)
-        } else {
-            res.send(err)
-        }
-    });
+exports.chargePendingWebhook = (req, res) => {
+    const pendingCharge =  {
+        code: req.body.event.data.code,
+        chargePendingAt: req.body.event.created_at,
+        transactionId: req.body.payments.transaction_id,
+        transactionAmount: req.body.payments.value.crypto.amount,
+        transactionCoinUnit: req.body.payments.value.crypto.currency,
+        blockNumber: req.body.payments.block.height,
+        blockHash: req.body.payments.block.hash,
+        confirmationAccumilated: req.body.payments.block.confirmations_accumulated,
+        confirmationRequired: req.body.payments.block.confirmations_required
+    }
+    PendingCharge.create(pendingCharge)
+    .then(()=>{
+        res.writeHead(200);
+        res.end();
+    })
+    .catch((err)=>{
+        res.writeHead(500);
+        res.end();
+    })
 }
-exports.test = function (req, res) {
-    query = "INSERT INTO test (value) VALUES(\'test\')";
-    query = "SELECT id FROM test WHERE id=1";
-    db.query(query).then(
-        (data) => {
-            console.log(data)
-            res.send(data)
-        }
-    ).catch(
-        (err) => {
-            res.send(err)
-        }
-    );
+exports.chargeDelayedWebhook = (req, res) => {
+    const delayedCharge =  {
+        code: req.body.event.data.code,
+        chargeDelayedAt: req.body.event.created_at,
+        transactionId: req.body.payments.transaction_id,
+        transactionAmount: req.body.payments.value.crypto.amount,
+        transactionCoinUnit: req.body.payments.value.crypto.currency,
+        blockNumber: req.body.payments.block.height,
+        blockHash: req.body.payments.block.hash,
+        confirmationAccumilated: req.body.payments.block.confirmations_accumulated,
+        confirmationRequired: req.body.payments.block.confirmations_required
+    }
+    DelayedCharge.create(delayedCharge)
+    .then(()=>{
+        res.writeHead(200);
+        res.end();
+    })
+    .catch((err)=>{
+        res.writeHead(500);
+        res.end();
+    })
+}
+exports.chargeFailedWebhook = (req, res) => {
+    const createdCharge =  {
+        code:req.body.event.data.code,
+        ChargeExpiredAt:req.body.event.created_at
+    }
+    CreatedCharge.create(createdCharge)
+    .then(()=>{
+        res.writeHead(200);
+        res.end();
+    })
+    .catch((err)=>{
+        res.writeHead(500);
+        res.end();
+    })
+}
+exports.chargeConfiremedWebhook = (req, res) => {
+    const confiremedCharge =  {
+        code: req.body.event.data.code,
+        chargeConfiremedAt: req.body.event.created_at,
+        transactionId: req.body.payments.transaction_id,
+        transactionAmount: req.body.payments.value.crypto.amount,
+        transactionCoinUnit: req.body.payments.value.crypto.currency,
+        blockNumber: req.body.payments.block.height,
+        blockHash: req.body.payments.block.hash,
+        confirmationAccumilated: req.body.payments.block.confirmations_accumulated,
+        confirmationRequired: req.body.payments.block.confirmations_required
+    }
+    CreatedCharge.create(confiremedCharge)
+    .then(()=>{
+        res.writeHead(200);
+        res.end();
+    })
+    .catch((err)=>{
+        res.writeHead(500);
+        res.end();
+    })
 }

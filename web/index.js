@@ -11,8 +11,7 @@ dotenv.config();
 let coinbase = require('coinbase-commerce-node');
 var Client = coinbase.Client;  
 Client.init('e83edb62-57f1-4ba0-8726-a989df548b5f'); 
-const db = require('../controllers/dbconection.controller');
-
+const db = require('../models/dbconection');
 // routers
 const routes = require('./router/index.route');
 
@@ -35,10 +34,10 @@ const app = module.exports = {};
 app.runServer = function (args) {
     // routes
     server.use('/', routes.accountRoutes);
-    server.use('/auth', routes.authRoutes);
+    server.use('/user', routes.userRoutes);
     server.use('/checkout', routes.coinbaseCommerceRoutes);
     //Connect to the database
-    db.conn.connect()
+    db.authenticate()
         .then(
             () => {
                 console.log("Connected to database")

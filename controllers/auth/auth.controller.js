@@ -1,6 +1,6 @@
 const axios = require('axios');
 const querystring = require('querystring');
-const db = require('../dbconection.controller').req;
+const db = require('../../models/dbconection');
 const common_helper = require('../common_helper.controller');
 let Client = require('coinbase').Client;
 let query;

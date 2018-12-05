@@ -1,4 +1,4 @@
-const db = require('./dbconection.controller').req;
+const db = require('../models/dbconection');
 let query = "";
 exports.send_error = (res, err, message, data)=>{
     res.send({
