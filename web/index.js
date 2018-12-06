@@ -35,6 +35,7 @@ app.runServer = function (args) {
     // routes
     server.use('/', routes.accountRoutes);
     server.use('/user', routes.userRoutes);
+    server.use('/product', routes.productRoutes);
     server.use('/checkout', routes.coinbaseCommerceRoutes);
     //Connect to the database
     db.authenticate()

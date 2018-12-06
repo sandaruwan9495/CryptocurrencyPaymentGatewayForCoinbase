@@ -6,6 +6,9 @@ const Product = sequelize.define('product', {
     },
     price: {
         type: Sequelize.FLOAT
+    },
+    priceUnit: {
+        type: Sequelize.STRING
     }    
   });
   Product.sync();

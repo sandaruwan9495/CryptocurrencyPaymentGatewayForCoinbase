@@ -2,7 +2,7 @@ const db = require('../models/dbconection');
 let query = "";
 exports.send_error = (res, err, message, data)=>{
     res.send({
-        satatus:false,
+        status:false,
         error:true,
         error_message:err,
         message:message,
@@ -11,7 +11,7 @@ exports.send_error = (res, err, message, data)=>{
 }
 exports.send_success = (res, message, data)=>{
     res.send({
-        satatus:true,
+        status:true,
         error:false,
         error_message:null,
         message:message,
@@ -20,7 +20,7 @@ exports.send_success = (res, message, data)=>{
 }
 exports.send_status_false = (res, message, data)=>{
     res.send({
-        satatus:false,
+        status:false,
         error:false,
         error_message:null,
         message:message,

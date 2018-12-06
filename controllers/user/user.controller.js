@@ -4,13 +4,13 @@ const User = require('../../models/users.model');
 const common_helper = require('../common_helper.controller');
 let Client = require('coinbase').Client;
 
-exports.index = function (req, res) {
+exports.index = (req, res) => {
  User.findById(1).then((users)=>{
    res.send(users)
  });
 }
-exports.userLogin = function (req, res) {
- User.findOne({where:{userName:req.body.email,password:req.body.password}})
+exports.userLogin = (req, res) => {
+ User.findOne({where:{userName:req.body.username,password:req.body.password}})
  .then(
    (user)=>{
      if (user != null) {
@@ -26,8 +26,8 @@ exports.userLogin = function (req, res) {
   }
  )
 }
-exports.adminLogin = function (req, res) {
-  User.findOne({where:{userName:req.body.email,password:req.body.password,isAdmin:true}})
+exports.adminLogin = (req, res) => {
+  User.findOne({where:{userName:req.body.username,password:req.body.password,isAdmin:true}})
   .then(
     (user)=>{
       if (user != null) {
@@ -42,4 +42,7 @@ exports.adminLogin = function (req, res) {
      common_helper.send_error(res,err,"failed to login")
    }
   )
+}
+exports.checkoutList = (req, res) => {
+  
 }

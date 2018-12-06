@@ -1,6 +1,7 @@
 const Sequelize = require('sequelize');
 const sequelize = require('./dbconection')
-const Charge = sequelize.define('charge', {
+const User = require ('./users.model');
+const Charge = sequelize.define('charge', {  
     code: {
         type: Sequelize.STRING
     },
@@ -8,7 +9,7 @@ const Charge = sequelize.define('charge', {
         type: Sequelize.STRING
     },
     hostedUrl: {
-        type: Sequelize.BOOLEAN
+        type: Sequelize.STRING
     },
     description: {
         type: Sequelize.STRING
@@ -27,5 +28,6 @@ const Charge = sequelize.define('charge', {
     }
     
   });
+  Charge.belongsTo(User);
   Charge.sync();
   module.exports = Charge;
