@@ -2,23 +2,13 @@
 let coinbase = require('coinbase-commerce-node');
 let Charge = coinbase.resources.Charge;
 const common_helper = require('../common_helper.controller');
-const ChargeM = require('../../models/charge.model');
-const Product = require('../../models/product.model');
-const User = require('../../models/users.model');
-const CreatedCharge = require('../../models/charge_created.model');
-const PendingCharge = require('../../models/charge_pending.model');
-const DelayedCharge = require('../../models/charge_delayed.model');
-const FailedCharge = require('../../models/charge_failed.model');
-const ConfiremedCharge = require('../../models/charge_confiremed.model');
-const Sequelize = require('sequelize');
+let db = require('../../models/dbconfig');
 exports.index = function (req, res) {
-    ChargeM.all({
-        include: [{
-            model: User,
-            required: true
-        }]
-    })
-        .then((charges) => {
+    db.Charge.findAll({
+		include: [{
+			model: db.User, required: true
+		}]
+	}).then((charges) => {
             common_helper.send_success(res, "all charges", charges)
         })
         .catch((err) => {
@@ -26,10 +16,10 @@ exports.index = function (req, res) {
         })
 }
 exports.create = (req, res) => {
-    User.findById(req.query.user_id)
+    db.User.findById(req.query.user_id)
         .then((user) => {
             if (user != null) {
-                Product.findById(req.query.id)
+                db.Product.findById(req.query.id)
                     .then((product) => {
                         var chargeData = {
                             'name': product.name,
@@ -42,8 +32,8 @@ exports.create = (req, res) => {
                         }
                         Charge.create(chargeData, (err, createdCharge) => {
                             if (!err) {
-                                ChargeM.create({
-                                    userId: req.query.user_id,
+                                db.Charge.create({
+                                    UserId: req.query.user_id,
                                     code: createdCharge.code,
                                     productName: createdCharge.name,
                                     hostedUrl: createdCharge.hosted_url,
@@ -77,7 +67,7 @@ exports.create = (req, res) => {
             }
         })
         .catch((err) => {
-            common_helper.send_error(res, err, "database Error")
+            common_helper.send_error(res, err, "database Errors")
         })
 }
 exports.chargeCreatedWebhook = (req, res) => {
@@ -85,7 +75,7 @@ exports.chargeCreatedWebhook = (req, res) => {
         code: req.body.event.data.code,
         ChargeCreatedAt: req.body.event.created_at
     }
-    CreatedCharge.create(createdCharge)
+    db.CreatedCharge.create(createdCharge)
         .then(() => {
             res.writeHead(200);
             res.end();
@@ -107,7 +97,7 @@ exports.chargePendingWebhook = (req, res) => {
         confirmationAccumilated: req.body.payments.block.confirmations_accumulated,
         confirmationRequired: req.body.payments.block.confirmations_required
     }
-    PendingCharge.create(pendingCharge)
+    db.PendingCharge.create(pendingCharge)
         .then(() => {
             res.writeHead(200);
             res.end();
@@ -129,7 +119,7 @@ exports.chargeDelayedWebhook = (req, res) => {
         confirmationAccumilated: req.body.payments.block.confirmations_accumulated,
         confirmationRequired: req.body.payments.block.confirmations_required
     }
-    DelayedCharge.create(delayedCharge)
+    db.DelayedCharge.create(delayedCharge)
         .then(() => {
             res.writeHead(200);
             res.end();
@@ -144,7 +134,7 @@ exports.chargeFailedWebhook = (req, res) => {
         code: req.body.event.data.code,
         ChargeExpiredAt: req.body.event.created_at
     }
-    FailedCharge.create(failedCharge)
+    db.FailedCharge.create(failedCharge)
         .then(() => {
             res.writeHead(200);
             res.end();
@@ -166,7 +156,7 @@ exports.chargeConfiremedWebhook = (req, res) => {
         confirmationAccumilated: req.body.payments.block.confirmations_accumulated,
         confirmationRequired: req.body.payments.block.confirmations_required
     }
-    ConfiremedCharge.create(confiremedCharge)
+    db.ConfirmedCharge.create(confiremedCharge)
         .then(() => {
             res.writeHead(200);
             res.end();
@@ -178,7 +168,12 @@ exports.chargeConfiremedWebhook = (req, res) => {
 }
 
 exports.getChargeCreated = (req, res) => {
-    CreatedCharge.all()
+    db.CreatedCharge.all({
+		include: [
+            {model: db.Charge, required: true},
+            {model: db.User, required: true},
+        ]
+	})
         .then((charges) => {
             common_helper.send_success(res, "all created charge", charges)
         })
@@ -187,7 +182,12 @@ exports.getChargeCreated = (req, res) => {
         })
 }
 exports.getChargePending = (req, res) => {
-    PendingCharge.all()
+    db.PendingCharge.all({
+		include: [
+            {model: db.Charge, required: true},
+            {model: db.User, required: true},
+        ]
+	})
         .then((charges) => {
             common_helper.send_success(res, "all pending charges", charges)
         })
@@ -196,7 +196,12 @@ exports.getChargePending = (req, res) => {
         })
 }
 exports.getChargeDelayed = (req, res) => {
-    DelayedCharge.all()
+    db.DelayedCharge.all({
+		include: [
+            {model: db.Charge, required: true},
+            {model: db.User, required: true},
+        ]
+	})
         .then((charges) => {
             common_helper.send_success(res, "all delayed charges", charges)
         })
@@ -205,7 +210,12 @@ exports.getChargeDelayed = (req, res) => {
         })
 }
 exports.getChargeFailed = (req, res) => {
-    FailedCharge.all()
+    db.FailedCharge.all({
+		include: [
+            {model: db.Charge, required: true},
+            {model: db.User, required: true},
+        ]
+	})
         .then((charges) => {
             common_helper.send_success(res, "all failed charges", charges)
         })
@@ -214,7 +224,12 @@ exports.getChargeFailed = (req, res) => {
         })
 }
 exports.getChargeConfiremed = (req, res) => {
-    ConfiremedCharge.all()
+    db.ConfiremedCharge.all({
+		include: [
+            {model: db.Charge, required: true},
+            {model: db.User, required: true},
+        ]
+	})
         .then((charges) => {
             common_helper.send_success(res, "all confiremed charges", charges)
         })

@@ -1,8 +1,8 @@
-const Product = require('../../models/product.model');
+let db = require('../../models/dbconfig');
 const common_helper = require('../common_helper.controller');
 
 exports.index = (req, res) => {
-    Product.all()
+    db.Product.all()
     .then((charges)=>{
         common_helper.send_success(res, "all products", charges)
     })

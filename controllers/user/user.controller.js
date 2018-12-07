@@ -1,16 +1,14 @@
-const axios = require('axios');
-const querystring = require('querystring');
-const User = require('../../models/users.model');
 const common_helper = require('../common_helper.controller');
 let Client = require('coinbase').Client;
+let db = require('../../models/dbconfig');
 
 exports.index = (req, res) => {
- User.findById(1).then((users)=>{
+ db.User.findById(1).then((users)=>{
    res.send(users)
  });
 }
 exports.userLogin = (req, res) => {
- User.findOne({where:{userName:req.body.username,password:req.body.password}})
+ db.User.findOne({where:{userName:req.body.username,password:req.body.password}})
  .then(
    (user)=>{
      if (user != null) {
@@ -27,7 +25,7 @@ exports.userLogin = (req, res) => {
  )
 }
 exports.adminLogin = (req, res) => {
-  User.findOne({where:{userName:req.body.username,password:req.body.password,isAdmin:true}})
+  db.User.findOne({where:{userName:req.body.username,password:req.body.password,isAdmin:true}})
   .then(
     (user)=>{
       if (user != null) {

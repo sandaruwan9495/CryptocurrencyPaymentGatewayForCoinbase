@@ -11,7 +11,7 @@ dotenv.config();
 let coinbase = require('coinbase-commerce-node');
 var Client = coinbase.Client;  
 Client.init('e83edb62-57f1-4ba0-8726-a989df548b5f'); 
-const db = require('../models/dbconection');
+const db = require('../models/dbconfig');
 // routers
 const routes = require('./router/index.route');
 
@@ -38,9 +38,33 @@ app.runServer = function (args) {
     server.use('/product', routes.productRoutes);
     server.use('/checkout', routes.coinbaseCommerceRoutes);
     //Connect to the database
-    db.authenticate()
+    db.sequelize.sync({force: true})
         .then(
             () => {
+                db.User.create({
+                    fullName:"sandaruwan",
+                    email:"sandaruwan@gmail.com",
+                    password:"12345",
+                    isAdmin:true,
+                    userName:"test1"
+                  })
+                  db.User.create({
+                    fullName:"sandaruwan2",
+                    email:"sandaruwan2@gmail.com",
+                    password:"12345",
+                    isAdmin:false,
+                    userName:"test2"
+                  })
+                  db.Product.create({
+                    name:"priduct1",
+                    price:100,
+                    priceUnit:"USD"
+                  })
+                  db.Product.create({
+                    name:"priduct2",
+                    price:200,
+                    priceUnit:"USD"
+                  })
                 console.log("Connected to database")
 
                 // start the server
